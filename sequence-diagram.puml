@@ -1,0 +1,169 @@
+@startuml
+!include style.puml
+autonumber
+
+Title retail-bootstrap-task execution
+
+Participant "retail-bootstrap-job" as rbg #lightgreen
+Participant "retail-bootstrap-task" as rbt #lightgreen
+Participant "products" as p #lightblue
+Participant "payveris-mock" as pm #lightblue
+Participant "keycloak" as kc #lightgray
+Participant "marqeta" as mq #lightgray
+Participant "mambu" as m #lightgray
+
+rbg -> rbt: Trigger task
+rbt -> p : upsert Products /service-api/v2/products
+rbt -> rbt : enrich data to append env details to the legalEntity data
+
+alt if mambu resourse enabled
+rbt -> m : ingest clients
+rbt -> m : ingest deposit accounts
+rbt -> m : ingest loan accounts
+end
+
+alt if marqeta resourse enabled
+rbt -> rbt : update cards details with env data
+rbt -> mq : ingest marqeta data
+end
+
+rbt -> p : upsert arrangements, set up product groups and permissions
+
+alt if admin resourse enabled
+rbt -> kc : ingest admin data
+end
+
+alt if payveris resourse enabled
+rbt -> pm : ingest payveris-mock data
+end
+@enduml
+
+@startuml
+!include style.puml
+autonumber
+
+Title ingest clients to mambu
+
+Participant "retail-bootstrap-task" as rbt #lightgreen
+Participant "mambu" as m #lightgray
+
+loop for eah LegalEntity
+rbt -> m : get Client /clients/{clientId}
+alt if client not exist
+rbt -> m : create Client /clients
+end
+end
+@enduml
+
+@startuml
+!include style.puml
+autonumber
+
+Title ingest deposit accounts to mambu
+
+Participant "retail-bootstrap-task" as rbt #lightgreen
+Participant "mambu" as m #lightgray
+
+loop for eah current/saving account
+rbt -> m : get deposit account /deposits/{depositAccountId}
+alt if deposit account exist
+rbt -> m : update bank branchCode /deposits/{depositAccountId}/_Deposit_Details_Deposit_Account/bankBranchCode
+rbt -> m : update bic /deposits/{depositAccountId}/_Deposit_Details_Deposit_Account/bic
+else if deposit account not exist
+rbt -> m : create deposit account /deposits
+rbt -> m : change state /deposits/{depositAccountId}:changeState
+rbt -> m : make deposit /deposits/{depositAccountId}/deposit-transactions
+alt if current account
+rbt -> m : make transfer /deposits/{depositAccountId}/transfer-transactions
+else if saving account
+rbt -> m : make withdrawal /deposits/{depositAccountId}/withdrawal-transactions
+end
+rbt -> m : attach documents /documents
+end
+end
+@enduml
+
+@startuml
+!include style.puml
+autonumber
+
+Title ingest loan accounts to mambu
+
+Participant "retail-bootstrap-task" as rbt #lightgreen
+Participant "mambu" as m #lightgray
+
+loop for eah loan account
+rbt -> m : get loan account GET /loans/{loanAccountId}
+alt if loan account exist
+rbt -> m : update bank branchCode PATCH /loans/{loanAccountId}
+else if loan account not exist
+rbt -> m : create loan account /loans
+rbt -> m : change state /loans/{loanAccountId}:changeState
+rbt -> m : make disbursement /loans/{loanAccountId}/disbursement-transactions
+rbt -> m : update bank branchCode PATCH /loans/{loanAccountId}
+rbt -> m : attach documents /documents
+end
+end
+@enduml
+
+@startuml
+!include style.puml
+autonumber
+
+Title ingest marqeta data
+
+Participant "retail-bootstrap-task" as rbt #lightgreen
+Participant "marqeta" as mq #lightgray
+
+loop for eah legalEntity
+alt if legalEntityType is “CUSTOMER”
+rbt -> mq : get user token /users/{token}
+alt if user not exist
+rbt -> mq : create user /users
+end
+rbt -> mq : get user linked cards /cards/user/{token}
+alt if card not linked
+rbt -> mq : create card product /cardproducts
+rbt -> mq : set card limit /velocitycontrols
+rbt -> mq : create card /cards
+end
+end
+end
+
+@enduml
+
+@startuml
+!include style.puml
+autonumber
+
+Title ingest admin data
+
+Participant "retail-bootstrap-task" as rbt #lightgreen
+Participant "keycloak" as kc #lightgray
+
+rbt -> kc : get all users /admin/realms/{realmName}/users
+
+loop for eah user
+rbt -> kc : verify user email /admin/realms/{realmName}/users/{userId}
+rbt -> kc : reset user password /admin/realms/{realmName}/users/{userId}/reset-password
+alt if user is employee
+rbt -> kc : get available roles /admin/realms/{realmName}/users/{userId}/role-mappings/realm/available
+rbt -> kc : add admin role /admin/realms/{realmName}/users/{userId}/role-mappings/realm
+end
+end
+@enduml
+
+@startuml
+!include style.puml
+autonumber
+
+Title ingest payveris-mock data
+
+Participant "retail-bootstrap-task" as rbt #lightgreen
+Participant "payveris-mock" as pm #lightblue
+rbt -> pm : reset data /mock/reset
+
+loop for eah LegalEntity
+rbt -> pm : add profile /mock/users/{externalUserId}/profile
+end
+@enduml

@@ -1,0 +1,5 @@
+.idea
+target
+*.iml
+telepresence.log
+.DS_Store

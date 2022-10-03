@@ -1,0 +1,126 @@
+# Service specific configuration
+
+# Stream config
+spring:
+  cloud:
+    kubernetes:
+      discovery:
+        enabled: true
+  zipkin:
+    enabled: false
+  security:
+    oauth2:
+      client:
+        registration:
+          bb:
+            authorization-grant-type: client_credentials
+            client-id: bb-client
+            client-secret: bb-secret
+            client-authentication-method: post
+        provider:
+          bb:
+            token-uri: http://token-converter:8080/oauth/token
+backbase:
+  stream:
+    bootstrap:
+      legal-entity-location: classpath:legal-entity-hierarchy.json
+      product-catalog-location: classpath:product-catalog.json
+    legalentity:
+      sink:
+        useIdentityIntegration: true
+        userProfileEnabled: false
+    dbs:
+      user-manager-base-url: http://user-manager:8080
+      access-control-base-url: http://access-control:8080
+      arrangement-manager-base-url: http://arrangement-manager:8080
+logging:
+  level:
+    root: INFO
+
+# Mambu config (loaded from env vars)
+mambu:
+  # Uncomment line below to create Mambu resources
+  # bootstrapResourcesEnabled: true
+  basePath:
+  username:
+  password:
+  branchKey:
+  currentAccountProductKey:
+  savingsAccountProductKey:
+  creditCardAccountProductKey:
+  transactionsBeneficiaryAccountKey:
+  ingestPlacesData: false
+  placesDataFile: places/places-data.json
+
+# Marqeta config (loaded from env vars)
+marqeta:
+  # Uncomment line below to create Marqeta resources
+  # bootstrapResourcesEnabled: true
+  basePath:
+  username:
+  password:
+  debugEnabled: true
+  debitCard:
+    name: " Black Card"
+    currencyCode: USD
+    usageLimit: 10
+    amountLimit: 5000
+    metaData:
+      atmMaxAmount: 10000
+      atmMinAmount: 0
+      brand: mastercard
+      currency: USD
+      onlineMaxAmount: 10000
+      onlineMinAmount: 0
+      replacementStatus: NotUnderReplacement
+      subType: ATM
+      type: Debit
+  creditCard:
+    name: " Gold Card"
+    currencyCode: USD
+    usageLimit: 20
+    amountLimit: 6000
+    metaData:
+      atmMaxAmount: 20000
+      atmMinAmount: 0
+      brand: mastercard
+      currency: USD
+      onlineMaxAmount: 20000
+      onlineMinAmount: 0
+      replacementStatus: NotUnderReplacement
+      subType: ATM
+      type: Credit
+  cardUsers:
+    debitCard:
+      - $installation-$runtime-sara
+      - $installation-$runtime-sara-autotest
+      - $installation-$runtime-john
+      - $installation-$runtime-paolo
+      - $installation-$runtime-paolo-autotest
+      - $installation-$runtime-matthew
+      - $installation-$runtime-emily-autotest
+      - $installation-$runtime-garuda
+      - $installation-$runtime-raghu
+    creditCard:
+      - $installation-$runtime-Emily
+      - $installation-$runtime-kevin
+      - $installation-$runtime-Peter
+      - $installation-$runtime-rohit
+
+# Admin config (loaded from env vars)
+admin:
+#  bootstrapManualStepsEnabled: true
+  basePath:
+  username:
+  password:
+  defaultUserPassword:
+  remoteConfigUsersLocation: classpath:remote-config-users.json
+
+# Payveris Mock config (loaded from env vars)
+payveris:
+#  bootstrapPayverisMockEnabled: true
+  payverisBasePath:
+
+environment:
+  installation: ref
+  runtime: dev

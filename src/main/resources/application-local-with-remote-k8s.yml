@@ -1,0 +1,36 @@
+# Task specific configuration for running task locally with reference to services running on K8s cluster
+
+spring:
+  cloud:
+    config:
+      enabled: false
+  security:
+    oauth2:
+      client:
+        provider:
+          dbs:
+            token-uri: http://localhost:18080/oauth/token  # kubectl -n backbase port-forward $(kubectl -n backbase get pods| grep 'token-converter' -m1 | cut -d' ' -f1) 18080:8080
+backbase:
+  stream:
+    dbs:
+      user-manager-base-url: http://localhost:18081  # kubectl -n backbase port-forward $(kubectl -n backbase get pods| grep 'user-manager' -m1 | cut -d' ' -f1) 18081:8080
+      access-control-base-url: http://localhost:18082 # kubectl -n backbase port-forward $(kubectl -n backbase get pods| grep 'access-control' -m1 | cut -d' ' -f1) 18082:8080
+      arrangement-manager-base-url: http://localhost:18083  # kubectl -n backbase port-forward $(kubectl -n backbase get pods| grep 'arrangement-manager' -m1 | cut -d' ' -f1) 18083:8080
+
+payveris:
+  bootstrapPayverisMockEnabled: false
+  payverisBasePath: http://localhost:18084 # kubectl -n backbase port-forward $(kubectl -n backbase get pods| grep 'payveris-mock' -m1 | cut -d' ' -f1) 18084:8080
+
+mambu:
+  bootstrap-resources-enabled: true
+  basePath: https://projectmoustache.sandbox.mambu.com/api
+  username: integrations-client
+  password: 7xaSLt^UE1lD
+  currentAccountProductKey: 8a19ade27796501e017796a8891321b0
+  savingsAccountProductKey: 8a19ddf377b43f9a0177b456b491054d
+  branchKey: 8a19d4237651743d017651b1d7f40386
+  transactionsBeneficiaryAccountKey: 8a19a6ed7651e85701765258571d01f4
+
+environment:
+  installation: ref
+  runtime: dev
